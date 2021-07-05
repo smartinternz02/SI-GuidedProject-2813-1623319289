@@ -1,0 +1,67 @@
+import time
+import sys
+import ibmiotf.application
+import ibmiotf.device
+import random
+import json
+organization = "a3m5xp"
+deviceType = "iotdevice"
+deviceId = "1001"
+authMethod = "token"
+authToken = "devesh1104"
+t=0
+h=0
+a=0
+w=0
+f=0
+def myCommandCallback(cmd):
+        print("Command received: %s" % cmd.data['command'])
+        if cmd.data['command']=='lighton':
+                print("LIGHT ON IS RECEIVED")
+        elif cmd.data['command']=='lightoff':
+                print("LIGHT OFF IS RECEIVED")
+        elif cmd.data['command']=='fanson':
+                print("FANS ON IS RECEIVED")
+        elif cmd.data['command']=='fansoff':
+                print("FANS OFF IS RECEIVED")
+        elif cmd.data['command']=='waterpumpon':
+                print("WATERPUMP ON IS RECEIVED")
+        elif cmd.data['command']=='waterpumpoff':
+                print("WATERPUMP OFF IS RECEIVED")
+        
+        if cmd.command == "setInterval":
+                if 'interval' not in cmd.data:
+                        print("Error - command is missing required information: 'interval'")
+                else:
+                 	interval = cmd.data['interval']
+        elif cmd.command == "print":
+                if 'message' not in cmd.data:
+                        print("Error - command is missing required information: 'message'")
+                else:
+                        print(cmd.data['message'])
+try:
+	deviceOptions = {"org": organization, "type": deviceType, "id": deviceId, "auth-method": authMethod, "auth-token": authToken}
+	deviceCli = ibmiotf.device.Client(deviceOptions)	
+except Exception as e:
+	print("Caught exception connecting device: %s" % str(e))
+	sys.exit()
+deviceCli.connect()
+while True:        
+        t=32
+        h=56
+        a=30
+        w=70
+        f=20
+        data = {"d":{ 'humidity': h,'temperature': t,'ammonialevel': a,'waterlevel': w,'firesensor': f}}#'humidity': h,'temperature': t,
+        #print data
+               
+        def myOnPublishCallback():
+            print ("Published humidity = %s %%"  %h, "temperature = %s %%"  %t, "ammonialevel = %s %%" %a, "waterlevel = %s %%" %w, "firesensor = %s %%" %f, "to IBM Watson")#humidity = %s %%"  %h, "temperature = %s %%"  %t, "
+        success = deviceCli.publishEvent("Data", "json", data, qos=0, on_publish=myOnPublishCallback)
+        
+        if not success:
+            print("Not connected to IoTF")
+        time.sleep(1)
+        deviceCli.commandCallback = myCommandCallback
+deviceCli.disconnect()
+
